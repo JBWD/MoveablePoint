@@ -1,150 +1,129 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using UnityEditor;
 using UnityEngine;
+using System.Reflection;
+using System.Collections.Generic;
 
-using UnityEditor;
-
-[CustomEditor(typeof(MonoBehaviour),true,isFallback = false)]
+[CustomEditor(typeof(MonoBehaviour), true, isFallback = false)]
 public class CustomPositionHandle : Editor
 {
-    
+    private GUIStyle style;
+    private MonoBehaviour t;
+    private FieldInfo[] fields;
 
-    void OnSceneGUI()
+    private void OnEnable()
     {
-        //Checks all MonoBehavior Elements for the attribute attached to the object.
-        var t = target as MonoBehaviour;
-        
-        if (t == null) return;
-        //Changes the style of the text and Color of the circles.
-        GUIStyle style = new GUIStyle();
+        t = target as MonoBehaviour;
 
-        style.fontSize = 12;
-        style.fontStyle = FontStyle.Bold;
+        style = new GUIStyle
+        {
+            fontSize = 12,
+            fontStyle = FontStyle.Bold
+        };
         style.normal.textColor = Color.yellow;
 
         Handles.color = Color.yellow;
 
-        //Goes through each of the variables within the script.
-        foreach (var fieldInfo in t.GetType().GetFields())
+        fields = t.GetType().GetFields(
+            BindingFlags.Public |
+            BindingFlags.NonPublic |
+            BindingFlags.Instance
+            );
+    }
+
+    private void OnSceneGUI()
+    {
+        if (t == null)
         {
-            try
+            return;
+        }
+
+        if (!MoveablePointAttribute.ShowHandles)
+        {
+            return;
+        }
+
+        foreach (var fieldInfo in fields)
+        {
+            var attribs = fieldInfo.GetCustomAttributes(typeof(MoveablePointAttribute), false);
+
+            if (attribs.Length <= 0)
             {
-                //Makes sure the variable has the flag of the type.
-                var attribs = fieldInfo.GetCustomAttributes(typeof(MoveablePointAttribute), false);
-
-                //If the length is >0 it means it has the flag attached.
-                //Also checks for the type of field it is to make sure it is valid.
-
-                if (attribs.Length > 0 && fieldInfo.FieldType == typeof(Vector3))
-                {
-                    //Converts the information to a Vector3
-                    Vector3 v = (Vector3)fieldInfo.GetValue(t);
-                    //Builds the handle
-                    v = Handles.PositionHandle(v, Quaternion.identity);
-                    //Adds a label of the variables name.
-                    Handles.Label(v, fieldInfo.Name, style);
-                    //Sets the value if the variable changes.
-                    fieldInfo.SetValue(t, v);
-                }
-               
-                else if (attribs.Length > 0 && fieldInfo.FieldType == typeof(Vector2))
-                {
-                    //Converts the information to a Vector3
-                    Vector2 v = (Vector2)fieldInfo.GetValue(t);
-                    //Builds the handle
-                    v = Handles.PositionHandle(v, Quaternion.identity);
-                    //Adds a label of the variables name.
-                    Handles.Label(v, fieldInfo.Name, style);
-                    //Sets the value if the variable changes.
-                    fieldInfo.SetValue(t, v);
-                }
-                else if(attribs.Length > 0 && fieldInfo.FieldType == typeof(Vector2[]))
-                {
-                    //Retrieves the array of elements.
-                    Vector2[] values = (Vector2[])fieldInfo.GetValue(t);
-                    //Iterates through the array.
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        //Creates a handle for each element
-                        values[i] = Handles.PositionHandle(values[i], Quaternion.identity);
-                        
-                        //Labels the element with it's index in the array.
-                        Handles.Label(new Vector3(values[i].x+.5f,values[i].y), i.ToString(),style);
-                        //Draws a circle for easier location within the scene.
-                        Handles.DrawWireDisc(values[i], new Vector3(0,0, 1), .5f);
-                    }
-                    //Changes all of the values within the array.
-                    fieldInfo.SetValue(t, values);
-                }
-
-                else if (attribs.Length > 0 && fieldInfo.FieldType == typeof(Vector3[]))
-                {
-
-                    //Retrieves the array of elements.
-                    Vector3[] values = (Vector3[])fieldInfo.GetValue(t);
-                    //Iterates through the array.
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        //Creates a handle for each element
-                        values[i] = Handles.PositionHandle(values[i], Quaternion.identity);
-
-                        //Labels the element with it's index in the array.
-                        Handles.Label(new Vector3(values[i].x + .5f, values[i].y), i.ToString(), style);
-                        //Draws a circle for easier location within the scene.
-                        Handles.DrawWireDisc(values[i], new Vector3(0, 0, 1), .5f);
-                    }
-                    //Changes all of the values within the array.
-                    fieldInfo.SetValue(t, values);
-                }
-                else if (attribs.Length > 0 && fieldInfo.FieldType == typeof(List<Vector2>))
-                {
-
-                    //Retrieves the array of elements.
-                    List<Vector2> values = (List<Vector2>)fieldInfo.GetValue(t);
-                    //Iterates through the array.
-                    for (int i = 0; i < values.Count; i++)
-                    {
-                        //Creates a handle for each element
-                        values[i] = Handles.PositionHandle(values[i], Quaternion.identity);
-
-                        //Labels the element with it's index in the array.
-                        Handles.Label(new Vector3(values[i].x + .5f, values[i].y), i.ToString(), style);
-                        //Draws a circle for easier location within the scene.
-                        Handles.DrawWireDisc(values[i], new Vector3(0, 0, 1), .5f);
-                    }
-                    //Changes all of the values within the array.
-                    fieldInfo.SetValue(t, values);
-                }
-                else if (attribs.Length > 0 && fieldInfo.FieldType == typeof(List<Vector3>))
-                {
-
-                    //Retrieves the array of elements.
-                    List<Vector3> values = (List<Vector3>)fieldInfo.GetValue(t);
-                    //Iterates through the array.
-                    for (int i = 0; i < values.Count; i++)
-                    {
-                        //Creates a handle for each element
-                        values[i] = Handles.PositionHandle(values[i], Quaternion.identity);
-
-                        //Labels the element with it's index in the array.
-                        Handles.Label(new Vector3(values[i].x + .5f, values[i].y), i.ToString(), style);
-                        //Draws a circle for easier location within the scene.
-                        Handles.DrawWireDisc(values[i], new Vector3(0, 0, 1), .5f);
-                    }
-                    //Changes all of the values within the array.
-                    fieldInfo.SetValue(t, values);
-                }
-                
+                continue;
             }
-            catch (System.Exception)
+
+            if (fieldInfo.FieldType == typeof(Vector2))
             {
-                // ignored
+                Vector2 v = UpdateHandle((Vector2)fieldInfo.GetValue(t), fieldInfo.Name);
+                fieldInfo.SetValue(t, v);
+                continue;
+            }
+
+            if (fieldInfo.FieldType == typeof(Vector3))
+            {
+                Vector3 v = UpdateHandle((Vector3)fieldInfo.GetValue(t), fieldInfo.Name);
+                fieldInfo.SetValue(t, v);
+                continue;
+            }
+
+            if (fieldInfo.FieldType == typeof(Vector2[]))
+            {
+                Vector2[] v = (Vector2[])fieldInfo.GetValue(t);
+
+                for (int i = 0; i < v.Length; i++)
+                {
+                    v[i] = UpdateHandle(v[i], fieldInfo.Name + ": " + i);
+                }
+
+                fieldInfo.SetValue(t, v);
+                continue;
+            }
+
+            if (fieldInfo.FieldType == typeof(Vector3[]))
+            {
+                Vector3[] v = (Vector3[])fieldInfo.GetValue(t);
+
+                for (int i = 0; i < v.Length; i++)
+                {
+                    v[i] = UpdateHandle(v[i], fieldInfo.Name + ": " + i);
+                }
+
+                fieldInfo.SetValue(t, v);
+                continue;
+            }
+
+            if (fieldInfo.FieldType == typeof(List<Vector2>))
+            {
+                List<Vector2> v = (List<Vector2>)fieldInfo.GetValue(t);
+
+                for (int i = 0; i < v.Count; i++)
+                {
+                    v[i] = UpdateHandle(v[i], fieldInfo.Name + ": " + i);
+                }
+
+                fieldInfo.SetValue(t, v);
+                continue;
+            }
+
+            if (fieldInfo.FieldType == typeof(List<Vector3>))
+            {
+                List<Vector3> v = (List<Vector3>)fieldInfo.GetValue(t);
+
+                for (int i = 0; i < v.Count; i++)
+                {
+                    v[i] = UpdateHandle(v[i], fieldInfo.Name + ": " + i);
+                }
+
+                fieldInfo.SetValue(t, v);
+                continue;
             }
         }
     }
 
-
-
-
-
+    private Vector3 UpdateHandle(Vector3 v, string name)
+    {
+        v = Handles.PositionHandle(v, Quaternion.identity);
+        Handles.Label(v, name, style);
+        Handles.DrawWireDisc(v, new Vector3(0, 0, 1), .5f);
+        return v;
+    }
 }
