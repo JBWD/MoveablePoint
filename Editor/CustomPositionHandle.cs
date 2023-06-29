@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Reflection;
 using System.Collections.Generic;
 
-[CustomEditor(typeof(MonoBehaviour), true, isFallback = false)]
+[CustomEditor(typeof(MoveablePointAttribute), true, isFallback = false)]
 public class CustomPositionHandle : Editor
 {
     private GUIStyle style;
